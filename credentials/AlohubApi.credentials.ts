@@ -17,7 +17,7 @@ export class AlohubApi implements ICredentialType {
 			typeOptions: { password: true },
 			default: '',
 			required: true,
-			description: 'Lấy tại alohub.vn/settings/api-keys',
+			description: 'Get your API key at alohub.vn/settings/api-keys',
 		},
 		{
 			displayName: 'Environment',
@@ -28,14 +28,14 @@ export class AlohubApi implements ICredentialType {
 				{ name: 'Sandbox (Mock)', value: 'sandbox' },
 			],
 			default: 'sandbox',
-			description: 'Sandbox trả mock response — không gửi thật',
+			description: 'Sandbox returns mock responses without sending real messages',
 		},
 		{
 			displayName: 'Account ID',
 			name: 'accountId',
 			type: 'string',
 			default: '',
-			description: 'Chỉ cần khi dùng mô hình đại lý / sub-account',
+			description: 'Only required when using reseller / sub-account model',
 		},
 	];
 
@@ -48,7 +48,7 @@ export class AlohubApi implements ICredentialType {
 		},
 	};
 
-	// TODO: đổi lại thành https://api.alohub.vn/v1/account/me khi BE sẵn sàng
+	// TODO: change to https://api.alohub.vn/v1/account/me when API is ready
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: 'https://httpbin.org',

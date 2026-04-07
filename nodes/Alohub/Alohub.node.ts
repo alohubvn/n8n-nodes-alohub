@@ -7,7 +7,7 @@ import {
 	NodeOperationError,
 } from 'n8n-workflow';
 
-// ── Mock helper ─────────────────────────────────────────────────────────────
+// ── Mock helpers ─────────────────────────────────────────────────────────────
 function mockMessageId() {
 	return 'alo_msg_' + Math.random().toString(36).slice(2, 11);
 }
@@ -73,7 +73,7 @@ export class Alohub implements INodeType {
 		group: ['output'],
 		version: 1,
 		subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
-		description: 'Gửi SMS, Zalo ZNS và gọi thoại qua Alohub CPaaS',
+		description: 'Send SMS, Zalo ZNS notifications and make voice calls via Alohub CPaaS',
 		defaults: { name: 'Alohub' },
 		inputs: ['main'],
 		outputs: ['main'],
@@ -116,7 +116,7 @@ export class Alohub implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['zns'] } },
-				options: [{ name: 'Send', value: 'send', action: 'Send a Zalo ZNS' }],
+				options: [{ name: 'Send', value: 'send', action: 'Send a Zalo ZNS notification' }],
 				default: 'send',
 			},
 
@@ -132,16 +132,16 @@ export class Alohub implements INodeType {
 			},
 
 			// ════════════════════════════════════════════════════════════════
-			// SMS — Send fields
+			// SMS — Send
 			// ════════════════════════════════════════════════════════════════
 			{
-				displayName: 'To (Phone Number)',
+				displayName: 'To',
 				name: 'to',
 				type: 'string',
 				required: true,
 				default: '',
 				placeholder: '+84912345678',
-				description: 'Số điện thoại nhận. Hỗ trợ expression n8n: {{ $json.phone }}',
+				description: 'Recipient phone number. Supports n8n expressions: {{ $json.phone }}',
 				displayOptions: { show: { resource: ['sms'], operation: ['send'] } },
 			},
 			{
@@ -151,8 +151,8 @@ export class Alohub implements INodeType {
 				required: true,
 				default: '',
 				typeOptions: { rows: 3 },
-				placeholder: 'Chào {{ $json.name }}, đơn hàng của bạn đã được xác nhận.',
-				description: 'Nội dung tin nhắn. Tối đa 160 ký tự/SMS. Hỗ trợ expression.',
+				placeholder: 'Hello {{ $json.name }}, your order #{{ $json.orderId }} has been confirmed.',
+				description: 'Message content. Max 160 characters per SMS. Supports expressions.',
 				displayOptions: { show: { resource: ['sms'], operation: ['send'] } },
 			},
 			{
@@ -161,21 +161,21 @@ export class Alohub implements INodeType {
 				type: 'string',
 				default: '',
 				placeholder: 'ALOHUB',
-				description: 'Brandname đã đăng ký. Để trống dùng mặc định.',
+				description: 'Registered brandname. Leave empty to use account default.',
 				displayOptions: { show: { resource: ['sms'], operation: ['send'] } },
 			},
 
 			// ════════════════════════════════════════════════════════════════
-			// ZNS — Send fields
+			// ZNS — Send
 			// ════════════════════════════════════════════════════════════════
 			{
-				displayName: 'To (Phone Number)',
+				displayName: 'To',
 				name: 'to',
 				type: 'string',
 				required: true,
 				default: '',
 				placeholder: '+84912345678',
-				description: 'Số điện thoại nhận (phải là tài khoản Zalo)',
+				description: 'Recipient phone number (must be a registered Zalo account)',
 				displayOptions: { show: { resource: ['zns'], operation: ['send'] } },
 			},
 			{
@@ -185,7 +185,7 @@ export class Alohub implements INodeType {
 				required: true,
 				default: '',
 				placeholder: '123456',
-				description: 'ID template ZNS đã được Zalo duyệt',
+				description: 'ID of the approved Zalo ZNS template',
 				displayOptions: { show: { resource: ['zns'], operation: ['send'] } },
 			},
 			{
@@ -194,7 +194,7 @@ export class Alohub implements INodeType {
 				type: 'fixedCollection',
 				typeOptions: { multipleValues: true },
 				default: {},
-				description: 'Các biến trong template ZNS (key-value)',
+				description: 'Key-value pairs to fill in the ZNS template variables',
 				displayOptions: { show: { resource: ['zns'], operation: ['send'] } },
 				options: [
 					{
@@ -224,21 +224,21 @@ export class Alohub implements INodeType {
 				name: 'oaId',
 				type: 'string',
 				default: '',
-				description: 'Zalo Official Account ID. Để trống dùng OA mặc định.',
+				description: 'Zalo Official Account ID. Leave empty to use account default.',
 				displayOptions: { show: { resource: ['zns'], operation: ['send'] } },
 			},
 
 			// ════════════════════════════════════════════════════════════════
-			// Voice — Make Call fields
+			// Voice — Make Call
 			// ════════════════════════════════════════════════════════════════
 			{
-				displayName: 'To (Phone Number)',
+				displayName: 'To',
 				name: 'to',
 				type: 'string',
 				required: true,
 				default: '',
 				placeholder: '+84912345678',
-				description: 'Số điện thoại cần gọi',
+				description: 'Phone number to call',
 				displayOptions: { show: { resource: ['voice'], operation: ['makeCall'] } },
 			},
 			{
@@ -247,8 +247,8 @@ export class Alohub implements INodeType {
 				type: 'string',
 				default: '',
 				typeOptions: { rows: 3 },
-				placeholder: 'Xin chào {{ $json.name }}, đây là nhắc nhở lịch hẹn của bạn.',
-				description: 'Nội dung đọc thoại (Text-to-Speech). Hỗ trợ expression.',
+				placeholder: 'Hello {{ $json.name }}, this is a reminder for your appointment on {{ $json.date }}.',
+				description: 'Text-to-Speech content. Supports n8n expressions.',
 				displayOptions: { show: { resource: ['voice'], operation: ['makeCall'] } },
 			},
 			{
@@ -256,8 +256,8 @@ export class Alohub implements INodeType {
 				name: 'voice',
 				type: 'options',
 				options: [
-					{ name: 'Vi-Female (mặc định)', value: 'vi-female' },
-					{ name: 'Vi-Male', value: 'vi-male' },
+					{ name: 'Vietnamese Female (Default)', value: 'vi-female' },
+					{ name: 'Vietnamese Male', value: 'vi-male' },
 				],
 				default: 'vi-female',
 				displayOptions: { show: { resource: ['voice'], operation: ['makeCall'] } },
@@ -267,7 +267,7 @@ export class Alohub implements INodeType {
 				name: 'callerNumber',
 				type: 'string',
 				default: '',
-				description: 'Số gọi ra. Để trống dùng số mặc định của account.',
+				description: 'Outbound caller number. Leave empty to use account default.',
 				displayOptions: { show: { resource: ['voice'], operation: ['makeCall'] } },
 			},
 
@@ -286,21 +286,21 @@ export class Alohub implements INodeType {
 						name: 'webhookUrl',
 						type: 'string',
 						default: '',
-						description: 'Alohub gọi URL này khi tin nhắn delivered / failed',
+						description: 'Alohub will call this URL when the message is delivered or failed',
 					},
 					{
 						displayName: 'Account ID Override',
 						name: 'accountId',
 						type: 'string',
 						default: '',
-						description: 'Override account khi dùng mô hình đại lý',
+						description: 'Override the account ID for reseller / sub-account scenarios',
 					},
 					{
-						displayName: 'Dry Run (No Send)',
+						displayName: 'Dry Run',
 						name: 'dryRun',
 						type: 'boolean',
 						default: false,
-						description: 'Whether to test flow mà không gửi thật',
+						description: 'Whether to simulate the request without actually sending',
 					},
 				],
 			},
@@ -338,7 +338,7 @@ export class Alohub implements INodeType {
 						responseData = mockSmsResponse(to, senderId);
 						if (options.dryRun) responseData.dryRun = true;
 					} else {
-						// TODO: thay bằng real API call khi BE sẵn sàng
+						// TODO: replace with real API call when backend is ready
 						const body: IDataObject = { to, message };
 						if (senderId) body.senderId = senderId;
 						if (options.webhookUrl) body.webhookUrl = options.webhookUrl;
@@ -380,7 +380,7 @@ export class Alohub implements INodeType {
 						responseData = mockZnsResponse(to, templateId);
 						if (options.dryRun) responseData.dryRun = true;
 					} else {
-						// TODO: thay bằng real API call khi BE sẵn sàng
+						// TODO: replace with real API call when backend is ready
 						const body: IDataObject = { to, templateId, templateData };
 						if (oaId) body.oaId = oaId;
 						if (options.webhookUrl) body.webhookUrl = options.webhookUrl;
@@ -413,7 +413,7 @@ export class Alohub implements INodeType {
 						responseData = mockVoiceResponse(to);
 						if (options.dryRun) responseData.dryRun = true;
 					} else {
-						// TODO: thay bằng real API call khi BE sẵn sàng
+						// TODO: replace with real API call when backend is ready
 						const body: IDataObject = { to, voice };
 						if (ttsContent) body.ttsContent = ttsContent;
 						if (callerNumber) body.callerNumber = callerNumber;
@@ -439,7 +439,7 @@ export class Alohub implements INodeType {
 				else {
 					throw new NodeOperationError(
 						this.getNode(),
-						`Resource "${resource}" / operation "${operation}" chưa được hỗ trợ`,
+						`Resource "${resource}" / operation "${operation}" is not supported`,
 					);
 				}
 
