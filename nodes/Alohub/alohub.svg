@@ -1,7 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">
-  <rect width="60" height="60" rx="12" fill="#0055B8"/>
-  <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle"
-        font-family="Arial,sans-serif" font-weight="700" font-size="18" fill="#ffffff">
-    AH
-  </text>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7B2FBE"/>
+      <stop offset="50%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="60" height="60" rx="12" fill="url(#bg)"/>
+
+  <!-- Letter A -->
+  <text x="30" y="40" font-family="Arial,sans-serif" font-weight="900"
+        font-size="34" fill="white" text-anchor="middle">A</text>
+
+  <!-- Headset left arc -->
+  <path d="M14 28 Q14 16 30 16 Q46 16 46 28" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Headset left ear -->
+  <circle cx="14" cy="30" r="3.5" fill="white"/>
+
+  <!-- Headset right ear -->
+  <circle cx="46" cy="30" r="3.5" fill="white"/>
+
+  <!-- Mic boom -->
+  <path d="M46 33 Q46 40 40 42" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="39" cy="43" r="2" fill="white"/>
 </svg>
