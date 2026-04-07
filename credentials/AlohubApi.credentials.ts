@@ -7,6 +7,7 @@ import {
 
 export class AlohubApi implements ICredentialType {
 	name = 'alohubApi';
+	icon = 'file:alohub.svg' as const;
 	displayName = 'Alohub API';
 	documentationUrl = 'https://alohub.vn/docs/api';
 	properties: INodeProperties[] = [

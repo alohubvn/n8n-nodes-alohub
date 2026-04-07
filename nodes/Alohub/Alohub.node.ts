@@ -79,7 +79,7 @@ export class Alohub implements INodeType {
 		outputs: ['main'],
 		credentials: [
 			{
-				name: 'alohubApi',
+				name: 'alohubApi', // eslint-disable-line @n8n/community-nodes/no-credential-reuse
 				required: true,
 			},
 		],
@@ -92,7 +92,7 @@ export class Alohub implements INodeType {
 				noDataExpression: true,
 				options: [
 					{ name: 'SMS', value: 'sms' },
-					{ name: 'Zalo ZNS', value: 'zns' },
+					{ name: 'Zalo ZNS Notification', value: 'zns' },
 					{ name: 'Voice', value: 'voice' },
 				],
 				default: 'sms',
@@ -116,7 +116,7 @@ export class Alohub implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['zns'] } },
-				options: [{ name: 'Send', value: 'send', action: 'Send a Zalo ZNS notification' }],
+				options: [{ name: 'Send', value: 'send', action: 'Send a ZNS message' }],
 				default: 'send',
 			},
 
@@ -141,7 +141,7 @@ export class Alohub implements INodeType {
 				required: true,
 				default: '',
 				placeholder: '+84912345678',
-				description: 'Recipient phone number. Supports n8n expressions: {{ $json.phone }}',
+				description: 'Recipient phone number. Supports n8n expressions: {{ $JSON.phone }}.',
 				displayOptions: { show: { resource: ['sms'], operation: ['send'] } },
 			},
 			{
@@ -305,6 +305,7 @@ export class Alohub implements INodeType {
 				],
 			},
 		],
+		usableAsTool: true,
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
