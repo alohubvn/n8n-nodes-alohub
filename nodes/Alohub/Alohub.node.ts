@@ -62,7 +62,7 @@ export class Alohub implements INodeType {
 		outputs: ['main'],
 		credentials: [
 			{
-				name: 'alohubApi', // eslint-disable-line @n8n/community-nodes/no-credential-reuse
+				name: 'alohubApi',
 				required: true,
 			},
 		],
@@ -75,7 +75,7 @@ export class Alohub implements INodeType {
 				noDataExpression: true,
 				options: [
 					{ name: 'Voice', value: 'voice' },
-					{ name: 'Zalo ZNS', value: 'zns' },
+					{ name: 'Zalo ZNS Notification', value: 'zns' },
 				],
 				default: 'voice',
 			},
@@ -158,21 +158,6 @@ export class Alohub implements INodeType {
 				displayOptions: { show: { resource: ['zns'], operation: ['send'] } },
 				options: [
 					{
-						displayName: 'Name',
-						name: 'name',
-						type: 'string',
-						default: '',
-						description: 'Recipient name',
-					},
-					{
-						displayName: 'Email',
-						name: 'email',
-						type: 'string',
-						default: '',
-						placeholder: 'john@example.com',
-						description: 'Recipient email',
-					},
-					{
 						displayName: 'Address',
 						name: 'address',
 						type: 'string',
@@ -220,6 +205,21 @@ export class Alohub implements INodeType {
 						type: 'string',
 						default: '',
 						description: 'Personalization field 6',
+					},
+					{
+						displayName: 'Email',
+						name: 'email',
+						type: 'string',
+						default: '',
+						placeholder: 'john@example.com',
+						description: 'Recipient email',
+					},
+					{
+						displayName: 'Name',
+						name: 'name',
+						type: 'string',
+						default: '',
+						description: 'Recipient name',
 					},
 				],
 			},
