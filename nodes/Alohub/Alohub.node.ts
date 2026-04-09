@@ -7,60 +7,43 @@ import {
 	NodeOperationError,
 } from 'n8n-workflow';
 
-// ── Mock helpers ─────────────────────────────────────────────────────────────
-function mockMessageId() {
-	return 'alo_msg_' + Math.random().toString(36).slice(2, 11);
+const BASE_URL = 'https://app.alohub.vn:9909';
+
+function generateTransactionId(): string {
+	const ts = Date.now().toString(36);
+	const rand = Math.random().toString(36).slice(2, 8);
+	return `ah_n8n_${ts}_${rand}`;
 }
 
-function buildBaseUrl(environment: string): string {
-	return environment === 'sandbox'
-		? 'https://sandbox.alohub.vn'
-		: 'https://api.alohub.vn';
-}
+const ERROR_CODES: Record<string, string> = {
+	'0': 'System error',
+	'1': 'Invalid API key',
+	'2': 'Invalid phone number',
+	'3': 'Insufficient balance',
+	'4': 'Rate limit exceeded',
+	'5': 'Invalid campaign ID',
+	'6': 'Campaign not found',
+	'7': 'Template not approved',
+	'8': 'IP phone not found',
+	'9': 'Phone number blacklisted',
+	'10': 'Service unavailable',
+};
 
-function mockSmsResponse(to: string, from: string): IDataObject {
+function parseApiResponse(
+	body: IDataObject,
+	httpStatus: number,
+	transactionId: string,
+	resource: string,
+	operation: string,
+): IDataObject {
 	return {
-		messageId: mockMessageId(),
-		status: 'queued',
-		channel: 'sms',
-		to,
-		from: from || 'ALOHUB',
-		cost: '0.002',
-		currency: 'USD',
-		sentAt: new Date().toISOString(),
-		accountId: 'acct_mock',
-		error: null,
-	};
-}
-
-function mockZnsResponse(to: string, templateId: string): IDataObject {
-	return {
-		messageId: mockMessageId(),
-		status: 'queued',
-		channel: 'zns',
-		to,
-		templateId,
-		cost: '0.005',
-		currency: 'USD',
-		sentAt: new Date().toISOString(),
-		accountId: 'acct_mock',
-		error: null,
-	};
-}
-
-function mockVoiceResponse(to: string): IDataObject {
-	return {
-		callId: 'alo_call_' + Math.random().toString(36).slice(2, 11),
-		status: 'initiated',
-		channel: 'voice',
-		to,
-		from: '02812345678',
-		duration: null,
-		cost: '0.01',
-		currency: 'USD',
-		initiatedAt: new Date().toISOString(),
-		accountId: 'acct_mock',
-		error: null,
+		success: String(body.success) === '1',
+		httpStatus,
+		transactionId,
+		resource,
+		operation,
+		timestamp: new Date().toISOString(),
+		...body,
 	};
 }
 
@@ -73,7 +56,7 @@ export class Alohub implements INodeType {
 		group: ['output'],
 		version: 1,
 		subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
-		description: 'Send SMS, Zalo ZNS notifications and make voice calls via Alohub CPaaS',
+		description: 'Send Zalo ZNS notifications and make voice calls via Alohub CPaaS',
 		defaults: { name: 'Alohub' },
 		inputs: ['main'],
 		outputs: ['main'],
@@ -91,33 +74,10 @@ export class Alohub implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				options: [
-					{ name: 'SMS', value: 'sms' },
-					{ name: 'Zalo ZNS Notification', value: 'zns' },
 					{ name: 'Voice', value: 'voice' },
+					{ name: 'Zalo ZNS', value: 'zns' },
 				],
-				default: 'sms',
-			},
-
-			// ── SMS operations ───────────────────────────────────────────────
-			{
-				displayName: 'Operation',
-				name: 'operation',
-				type: 'options',
-				noDataExpression: true,
-				displayOptions: { show: { resource: ['sms'] } },
-				options: [{ name: 'Send', value: 'send', action: 'Send an SMS' }],
-				default: 'send',
-			},
-
-			// ── ZNS operations ───────────────────────────────────────────────
-			{
-				displayName: 'Operation',
-				name: 'operation',
-				type: 'options',
-				noDataExpression: true,
-				displayOptions: { show: { resource: ['zns'] } },
-				options: [{ name: 'Send', value: 'send', action: 'Send a ZNS message' }],
-				default: 'send',
+				default: 'voice',
 			},
 
 			// ── Voice operations ─────────────────────────────────────────────
@@ -127,180 +87,139 @@ export class Alohub implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['voice'] } },
-				options: [{ name: 'Make Call', value: 'makeCall', action: 'Make a voice call' }],
-				default: 'makeCall',
+				options: [{ name: 'Click to Call', value: 'makeToCall', action: 'Make to call' }],
+				default: 'makeToCall',
+			},
+
+			// ── ZNS operations ───────────────────────────────────────────────
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['zns'] } },
+				options: [{ name: 'Send', value: 'send', action: 'Send ZNS' }],
+				default: 'send',
 			},
 
 			// ════════════════════════════════════════════════════════════════
-			// SMS — Send
+			// Voice — Click to Call
 			// ════════════════════════════════════════════════════════════════
 			{
-				displayName: 'To',
-				name: 'to',
+				displayName: 'Phone Number',
+				name: 'phoneNumber',
 				type: 'string',
 				required: true,
 				default: '',
-				placeholder: '+84912345678',
-				description: 'Recipient phone number. Supports n8n expressions: {{ $JSON.phone }}.',
-				displayOptions: { show: { resource: ['sms'], operation: ['send'] } },
+				placeholder: '0912345678',
+				description: 'Recipient phone number to call',
+				displayOptions: { show: { resource: ['voice'], operation: ['makeToCall'] } },
 			},
 			{
-				displayName: 'Message',
-				name: 'message',
+				displayName: 'IP Phone',
+				name: 'ipPhone',
 				type: 'string',
 				required: true,
 				default: '',
-				typeOptions: { rows: 3 },
-				placeholder: 'Hello {{ $json.name }}, your order #{{ $json.orderId }} has been confirmed.',
-				description: 'Message content. Max 160 characters per SMS. Supports expressions.',
-				displayOptions: { show: { resource: ['sms'], operation: ['send'] } },
-			},
-			{
-				displayName: 'Sender ID / Brandname',
-				name: 'senderId',
-				type: 'string',
-				default: '',
-				placeholder: 'ALOHUB',
-				description: 'Registered brandname. Leave empty to use account default.',
-				displayOptions: { show: { resource: ['sms'], operation: ['send'] } },
+				placeholder: '6688',
+				description: 'IP phone extension number (e.g. 6688)',
+				displayOptions: { show: { resource: ['voice'], operation: ['makeToCall'] } },
 			},
 
 			// ════════════════════════════════════════════════════════════════
 			// ZNS — Send
 			// ════════════════════════════════════════════════════════════════
 			{
-				displayName: 'To',
-				name: 'to',
+				displayName: 'Phone',
+				name: 'phone',
 				type: 'string',
 				required: true,
 				default: '',
-				placeholder: '+84912345678',
-				description: 'Recipient phone number (must be a registered Zalo account)',
+				placeholder: '0912345678',
+				description: 'Recipient phone number (must have a Zalo account)',
 				displayOptions: { show: { resource: ['zns'], operation: ['send'] } },
 			},
 			{
-				displayName: 'Template ID',
-				name: 'templateId',
-				type: 'string',
+				displayName: 'Campaign ID',
+				name: 'campaignId',
+				type: 'number',
 				required: true,
-				default: '',
-				placeholder: '123456',
-				description: 'ID of the approved Zalo ZNS template',
+				default: 0,
+				placeholder: '1',
+				description: 'Campaign ID for the ZNS template',
 				displayOptions: { show: { resource: ['zns'], operation: ['send'] } },
 			},
 			{
-				displayName: 'Template Parameters',
-				name: 'templateParams',
-				type: 'fixedCollection',
-				typeOptions: { multipleValues: true },
-				default: {},
-				description: 'Key-value pairs to fill in the ZNS template variables',
-				displayOptions: { show: { resource: ['zns'], operation: ['send'] } },
-				options: [
-					{
-						name: 'params',
-						displayName: 'Parameter',
-						values: [
-							{
-								displayName: 'Key',
-								name: 'key',
-								type: 'string',
-								default: '',
-								placeholder: 'order_id',
-							},
-							{
-								displayName: 'Value',
-								name: 'value',
-								type: 'string',
-								default: '',
-								placeholder: '{{ $json.orderId }}',
-							},
-						],
-					},
-				],
-			},
-			{
-				displayName: 'OA ID',
-				name: 'oaId',
-				type: 'string',
-				default: '',
-				description: 'Zalo Official Account ID. Leave empty to use account default.',
-				displayOptions: { show: { resource: ['zns'], operation: ['send'] } },
-			},
-
-			// ════════════════════════════════════════════════════════════════
-			// Voice — Make Call
-			// ════════════════════════════════════════════════════════════════
-			{
-				displayName: 'To',
-				name: 'to',
-				type: 'string',
-				required: true,
-				default: '',
-				placeholder: '+84912345678',
-				description: 'Phone number to call',
-				displayOptions: { show: { resource: ['voice'], operation: ['makeCall'] } },
-			},
-			{
-				displayName: 'TTS Content',
-				name: 'ttsContent',
-				type: 'string',
-				default: '',
-				typeOptions: { rows: 3 },
-				placeholder: 'Hello {{ $json.name }}, this is a reminder for your appointment on {{ $json.date }}.',
-				description: 'Text-to-Speech content. Supports n8n expressions.',
-				displayOptions: { show: { resource: ['voice'], operation: ['makeCall'] } },
-			},
-			{
-				displayName: 'Voice',
-				name: 'voice',
-				type: 'options',
-				options: [
-					{ name: 'Vietnamese Female (Default)', value: 'vi-female' },
-					{ name: 'Vietnamese Male', value: 'vi-male' },
-				],
-				default: 'vi-female',
-				displayOptions: { show: { resource: ['voice'], operation: ['makeCall'] } },
-			},
-			{
-				displayName: 'Caller Number',
-				name: 'callerNumber',
-				type: 'string',
-				default: '',
-				description: 'Outbound caller number. Leave empty to use account default.',
-				displayOptions: { show: { resource: ['voice'], operation: ['makeCall'] } },
-			},
-
-			// ════════════════════════════════════════════════════════════════
-			// Options (shared)
-			// ════════════════════════════════════════════════════════════════
-			{
-				displayName: 'Options',
-				name: 'options',
+				displayName: 'Additional Fields',
+				name: 'additionalFields',
 				type: 'collection',
-				placeholder: 'Add Option',
+				placeholder: 'Add Field',
 				default: {},
+				displayOptions: { show: { resource: ['zns'], operation: ['send'] } },
 				options: [
 					{
-						displayName: 'Webhook Callback URL',
-						name: 'webhookUrl',
+						displayName: 'Name',
+						name: 'name',
 						type: 'string',
 						default: '',
-						description: 'Alohub will call this URL when the message is delivered or failed',
+						description: 'Recipient name',
 					},
 					{
-						displayName: 'Account ID Override',
-						name: 'accountId',
+						displayName: 'Email',
+						name: 'email',
 						type: 'string',
 						default: '',
-						description: 'Override the account ID for reseller / sub-account scenarios',
+						placeholder: 'john@example.com',
+						description: 'Recipient email',
 					},
 					{
-						displayName: 'Dry Run',
-						name: 'dryRun',
-						type: 'boolean',
-						default: false,
-						description: 'Whether to simulate the request without actually sending',
+						displayName: 'Address',
+						name: 'address',
+						type: 'string',
+						default: '',
+						description: 'Recipient address',
+					},
+					{
+						displayName: 'Custom Field 1',
+						name: 'pField1',
+						type: 'string',
+						default: '',
+						description: 'Personalization field 1',
+					},
+					{
+						displayName: 'Custom Field 2',
+						name: 'pField2',
+						type: 'string',
+						default: '',
+						description: 'Personalization field 2',
+					},
+					{
+						displayName: 'Custom Field 3',
+						name: 'pField3',
+						type: 'string',
+						default: '',
+						description: 'Personalization field 3',
+					},
+					{
+						displayName: 'Custom Field 4',
+						name: 'pField4',
+						type: 'string',
+						default: '',
+						description: 'Personalization field 4',
+					},
+					{
+						displayName: 'Custom Field 5',
+						name: 'pField5',
+						type: 'string',
+						default: '',
+						description: 'Personalization field 5',
+					},
+					{
+						displayName: 'Custom Field 6',
+						name: 'pField6',
+						type: 'string',
+						default: '',
+						description: 'Personalization field 6',
 					},
 				],
 			},
@@ -312,129 +231,71 @@ export class Alohub implements INodeType {
 		const items = this.getInputData();
 		const returnData: INodeExecutionData[] = [];
 
-		const credentials = await this.getCredentials('alohubApi');
-		const environment = credentials.environment as string;
-		const isSandbox = environment === 'sandbox';
-		const baseUrl = buildBaseUrl(environment);
-
 		for (let i = 0; i < items.length; i++) {
 			const resource = this.getNodeParameter('resource', i) as string;
 			const operation = this.getNodeParameter('operation', i) as string;
-			const options = this.getNodeParameter('options', i, {}) as {
-				webhookUrl?: string;
-				accountId?: string;
-				dryRun?: boolean;
-			};
 
 			let responseData: IDataObject;
 
 			try {
-				// ── SMS: Send ────────────────────────────────────────────────
-				if (resource === 'sms' && operation === 'send') {
-					const to = this.getNodeParameter('to', i) as string;
-					const message = this.getNodeParameter('message', i) as string;
-					const senderId = this.getNodeParameter('senderId', i, '') as string;
+				let transactionId = '';
+				let httpStatus = 0;
 
-					if (isSandbox || options.dryRun) {
-						responseData = mockSmsResponse(to, senderId);
-						if (options.dryRun) responseData.dryRun = true;
-					} else {
-						// TODO: replace with real API call when backend is ready
-						const body: IDataObject = { to, message };
-						if (senderId) body.senderId = senderId;
-						if (options.webhookUrl) body.webhookUrl = options.webhookUrl;
-						if (options.accountId || credentials.accountId)
-							body.accountId = options.accountId || credentials.accountId;
+				// ── Voice: Click to Call ─────────────────────────────────────
+				if (resource === 'voice' && operation === 'makeToCall') {
+					const phoneNumber = this.getNodeParameter('phoneNumber', i) as string;
+					const ipPhone = this.getNodeParameter('ipPhone', i) as string;
+					transactionId = generateTransactionId();
 
-						const response = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'alohubApi',
-							{
-								method: 'POST',
-								url: `${baseUrl}/v1/messages/sms`,
-								headers: { 'Content-Type': 'application/json' },
-								body,
-								json: true,
-							},
-						);
-						responseData = response as IDataObject;
-					}
+					const body: IDataObject = { phoneNumber, ipPhone, transactionId };
+
+					const response = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						'alohubApi',
+						{
+							method: 'POST',
+							url: `${BASE_URL}/v1/voice/click-to-call`,
+							headers: { 'Content-Type': 'application/json' },
+							body,
+							json: true,
+							returnFullResponse: true,
+						},
+					);
+					const fullRes = response as IDataObject;
+					httpStatus = (fullRes.statusCode as number) || 0;
+					responseData = (fullRes.body as IDataObject) || fullRes;
 				}
 
 				// ── ZNS: Send ────────────────────────────────────────────────
 				else if (resource === 'zns' && operation === 'send') {
-					const to = this.getNodeParameter('to', i) as string;
-					const templateId = this.getNodeParameter('templateId', i) as string;
-					const oaId = this.getNodeParameter('oaId', i, '') as string;
-					const rawParams = this.getNodeParameter('templateParams', i, {}) as {
-						params?: Array<{ key: string; value: string }>;
-					};
+					const phone = this.getNodeParameter('phone', i) as string;
+					const campaignId = this.getNodeParameter('campaignId', i) as number;
+					const additionalFields = this.getNodeParameter('additionalFields', i, {}) as IDataObject;
+					transactionId = generateTransactionId();
 
-					const templateData: Record<string, string> = {};
-					if (rawParams.params) {
-						for (const p of rawParams.params) {
-							if (p.key) templateData[p.key] = p.value;
+					const body: IDataObject = { phone, campaignId, transactionId };
+
+					for (const [key, value] of Object.entries(additionalFields)) {
+						if (value !== '' && value !== undefined) {
+							body[key] = value;
 						}
 					}
 
-					if (isSandbox || options.dryRun) {
-						responseData = mockZnsResponse(to, templateId);
-						if (options.dryRun) responseData.dryRun = true;
-					} else {
-						// TODO: replace with real API call when backend is ready
-						const body: IDataObject = { to, templateId, templateData };
-						if (oaId) body.oaId = oaId;
-						if (options.webhookUrl) body.webhookUrl = options.webhookUrl;
-						if (options.accountId || credentials.accountId)
-							body.accountId = options.accountId || credentials.accountId;
-
-						const response = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'alohubApi',
-							{
-								method: 'POST',
-								url: `${baseUrl}/v1/messages/zns`,
-								headers: { 'Content-Type': 'application/json' },
-								body,
-								json: true,
-							},
-						);
-						responseData = response as IDataObject;
-					}
-				}
-
-				// ── Voice: Make Call ─────────────────────────────────────────
-				else if (resource === 'voice' && operation === 'makeCall') {
-					const to = this.getNodeParameter('to', i) as string;
-					const ttsContent = this.getNodeParameter('ttsContent', i, '') as string;
-					const voice = this.getNodeParameter('voice', i) as string;
-					const callerNumber = this.getNodeParameter('callerNumber', i, '') as string;
-
-					if (isSandbox || options.dryRun) {
-						responseData = mockVoiceResponse(to);
-						if (options.dryRun) responseData.dryRun = true;
-					} else {
-						// TODO: replace with real API call when backend is ready
-						const body: IDataObject = { to, voice };
-						if (ttsContent) body.ttsContent = ttsContent;
-						if (callerNumber) body.callerNumber = callerNumber;
-						if (options.webhookUrl) body.webhookUrl = options.webhookUrl;
-						if (options.accountId || credentials.accountId)
-							body.accountId = options.accountId || credentials.accountId;
-
-						const response = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'alohubApi',
-							{
-								method: 'POST',
-								url: `${baseUrl}/v1/voice/call`,
-								headers: { 'Content-Type': 'application/json' },
-								body,
-								json: true,
-							},
-						);
-						responseData = response as IDataObject;
-					}
+					const response = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						'alohubApi',
+						{
+							method: 'POST',
+							url: `${BASE_URL}/v1/zns/send`,
+							headers: { 'Content-Type': 'application/json' },
+							body,
+							json: true,
+							returnFullResponse: true,
+						},
+					);
+					const fullRes = response as IDataObject;
+					httpStatus = (fullRes.statusCode as number) || 0;
+					responseData = (fullRes.body as IDataObject) || fullRes;
 				}
 
 				else {
@@ -444,14 +305,46 @@ export class Alohub implements INodeType {
 					);
 				}
 
+				// ── Handle API response ──────────────────────────────────────
+				const enriched = parseApiResponse(responseData, httpStatus, transactionId, resource, operation);
+
+				if (String(responseData.success) !== '1') {
+					const code = String(responseData.error_code ?? '');
+					const apiMsg = (responseData.error_message as string) || 'Unknown error';
+					const hint = ERROR_CODES[code] || '';
+					const message = hint ? `${apiMsg} (${hint})` : apiMsg;
+
+					if (this.continueOnFail()) {
+						returnData.push({
+							json: {
+								...enriched,
+								success: false,
+								errorCode: code,
+								errorMessage: message,
+							},
+							pairedItem: { item: i },
+						});
+						continue;
+					}
+
+					throw new NodeOperationError(
+						this.getNode(),
+						`Alohub API error [${code}]: ${message} (Transaction: ${transactionId})`,
+					);
+				}
+
 				returnData.push({
-					json: responseData,
+					json: enriched,
 					pairedItem: { item: i },
 				});
 			} catch (error) {
 				if (this.continueOnFail()) {
 					returnData.push({
-						json: { error: (error as Error).message },
+						json: {
+							success: false,
+							error: (error as Error).message,
+							timestamp: new Date().toISOString(),
+						},
 						pairedItem: { item: i },
 					});
 				} else {
