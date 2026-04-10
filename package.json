@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-alohub-sandbox",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "n8n community nodes for Alohub CPaaS — SMS, Zalo ZNS, Voice",
 	"license": "MIT",
 	"homepage": "https://alohub.vn",
