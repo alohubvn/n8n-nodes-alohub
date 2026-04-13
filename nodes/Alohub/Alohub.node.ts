@@ -12,7 +12,7 @@ import {
 	ResourceMapperFields,
 } from 'n8n-workflow';
 
-const BASE_URL = 'https://app.alohub.vn:9909';
+const BASE_URL = 'xapi-dev.alohub.vn';
 const REQUEST_TIMEOUT = 15000;
 
 function generateTransactionId(): string {
