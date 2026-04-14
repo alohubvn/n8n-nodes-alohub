@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-alohub",
-	"version": "0.1.0",
+	"version": "0.2.4",
 	"description": "n8n community node for Alohub CPaaS — Voice (Click a Call) and Zalo ZNS notifications",
 	"license": "MIT",
 	"homepage": "https://alohub.vn",
