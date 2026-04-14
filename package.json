@@ -1,7 +1,7 @@
 {
 	"name": "n8n-nodes-alohub",
-	"version": "0.2.1",
-	"description": "n8n community nodes for Alohub CPaaS — SMS, Zalo ZNS, Voice",
+	"version": "0.1.0",
+	"description": "n8n community node for Alohub CPaaS — Voice (Click a Call) and Zalo ZNS notifications",
 	"license": "MIT",
 	"homepage": "https://alohub.vn",
 	"keywords": [
@@ -9,11 +9,11 @@
 	],
 	"author": {
 		"name": "Alohub",
-		"email": "dev@alohub.vn"
+		"email": "admin@alohub.vn"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/taquocthangg/-n8n-nodes-alohub-sanbox.git"
+		"url": "https://github.com/alohubvn/n8n-nodes-alohub"
 	},
 	"scripts": {
 		"build": "n8n-node build",
