@@ -33,7 +33,7 @@ export class AlohubApi implements ICredentialType {
 
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: 'xapi-dev.alohub.vn',
+			baseURL: 'xapi.alohub.vn',
 			url: '/v1/voice/click-to-call',
 			method: 'POST',
 			headers: {
