@@ -74,6 +74,7 @@ export class Alohub implements INodeType {
 		outputs: ['main'],
 		credentials: [
 			{
+				// eslint-disable-next-line @n8n/community-nodes/no-credential-reuse
 				name: 'alohubApi',
 				required: true,
 			},
