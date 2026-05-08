@@ -1,0 +1,173 @@
+<h2>Tổng quan</h2>
+
+<p><strong>n8n-nodes-alohub</strong> là community node cho nền tảng <a target="_blank" rel="noopener noreferrer nofollow" href="https://n8n.io">n8n</a>, cho phép tích hợp các dịch vụ CPaaS của <a target="_blank" rel="noopener noreferrer nofollow" href="https://alohub.vn">Alohub</a> vào workflow tự động hóa.</p>
+
+<p>Node hỗ trợ 2 tính năng chính:</p>
+
+<table style="min-width: 150px;"><colgroup><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"></colgroup><tbody><tr><th colspan="1" rowspan="1"><p>Tính năng</p></th><th colspan="1" rowspan="1"><p>Operation</p></th><th colspan="1" rowspan="1"><p>Mô tả</p></th></tr><tr><td colspan="1" rowspan="1"><p><strong>Voice</strong></p></td><td colspan="1" rowspan="1"><p>Make a Call (Click to Call)</p></td><td colspan="1" rowspan="1"><p>Thực hiện cuộc gọi ra qua IP Phone</p></td></tr><tr><td colspan="1" rowspan="1"><p><strong>Zalo ZNS</strong></p></td><td colspan="1" rowspan="1"><p>Send</p></td><td colspan="1" rowspan="1"><p>Gửi thông báo ZNS qua Zalo với template động</p></td></tr></tbody></table>
+
+<blockquote><p><strong>Lưu ý:</strong> Bạn cần có tài khoản Alohub và API Key để sử dụng node này. <a target="_blank" rel="noopener noreferrer nofollow" href="https://alohub.vn/lien-he">Liên hệ Alohub</a> để được cấp thông tin.</p></blockquote>
+
+<h2>Cài đặt</h2>
+
+<h3>Cách 1 — Cài từ giao diện n8n (khuyên dùng)</h3>
+
+<ol>
+<li><p>Mở n8n, vào <strong>Settings → Community Nodes</strong></p></li>
+<li><p>Click <strong>Install a community node</strong></p></li>
+<li><p>Nhập <code>n8n-nodes-alohub</code></p></li>
+<li><p>Click <strong>Install</strong> → đợi cài xong</p></li>
+</ol>
+
+<h3>Cách 2 — Cài bằng npm (self-hosted)</h3>
+
+<p>Chạy lệnh sau trong thư mục cài đặt n8n:</p>
+
+<pre><code class="language-bash">npm install n8n-nodes-alohub</code></pre>
+
+<p>Sau đó restart n8n để load node mới.</p>
+
+<h2>Thiết lập Credential (API Key)</h2>
+
+<p>Trước khi sử dụng node, bạn cần tạo credential chứa API Key của Alohub.</p>
+
+<ol>
+<li><p>Kéo node <strong>Alohub</strong> vào workflow</p></li>
+<li><p>Click vào dropdown <strong>Credential</strong> → chọn <strong>Create new credential</strong></p></li>
+<li><p>Nhập <strong>API Key</strong> — lấy từ dashboard Alohub. <a target="_blank" rel="noopener noreferrer nofollow" href="https://alohub.vn/lien-he">Liên hệ Alohub</a> nếu chưa có.</p></li>
+<li><p>Click <strong>Save</strong> — hệ thống sẽ tự kiểm tra kết nối</p></li>
+</ol>
+
+<table style="min-width: 100px;"><colgroup><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"></colgroup><tbody><tr><th colspan="1" rowspan="1"><p>Tham số</p></th><th colspan="1" rowspan="1"><p>Kiểu</p></th><th colspan="1" rowspan="1"><p>Bắt buộc</p></th><th colspan="1" rowspan="1"><p>Mô tả</p></th></tr><tr><td colspan="1" rowspan="1"><p><code>API Key</code></p></td><td colspan="1" rowspan="1"><p>string</p></td><td colspan="1" rowspan="1"><p>Có</p></td><td colspan="1" rowspan="1"><p>API Key từ Alohub dashboard. Gửi qua header <code>X-Api-Key</code>.</p></td></tr></tbody></table>
+
+<h2>Sử dụng — Voice: Click to Call</h2>
+
+<p>Thực hiện cuộc gọi ra (outbound) bằng cách kết nối số điện thoại khách hàng với IP Phone nội bộ.</p>
+
+<h3>Cấu hình</h3>
+
+<ol>
+<li><p>Chọn <strong>Resource</strong>: <code>Voice</code></p></li>
+<li><p>Chọn <strong>Operation</strong>: <code>Make a Call</code></p></li>
+<li><p>Điền các tham số:</p></li>
+</ol>
+
+<table style="min-width: 125px;"><colgroup><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"></colgroup><tbody><tr><th colspan="1" rowspan="1"><p>Tham số</p></th><th colspan="1" rowspan="1"><p>Kiểu</p></th><th colspan="1" rowspan="1"><p>Bắt buộc</p></th><th colspan="1" rowspan="1"><p>Ví dụ</p></th><th colspan="1" rowspan="1"><p>Mô tả</p></th></tr><tr><td colspan="1" rowspan="1"><p><code>Phone Number</code></p></td><td colspan="1" rowspan="1"><p>string</p></td><td colspan="1" rowspan="1"><p>Có</p></td><td colspan="1" rowspan="1"><p><code>0912345678</code></p></td><td colspan="1" rowspan="1"><p>Số điện thoại cần gọi</p></td></tr><tr><td colspan="1" rowspan="1"><p><code>IP Phone</code></p></td><td colspan="1" rowspan="1"><p>string</p></td><td colspan="1" rowspan="1"><p>Có</p></td><td colspan="1" rowspan="1"><p><code>6688</code></p></td><td colspan="1" rowspan="1"><p>Số extension IP Phone nội bộ</p></td></tr></tbody></table>
+
+<blockquote><p><strong>Lưu ý:</strong> Hệ thống tự động tạo <code>transactionId</code> duy nhất cho mỗi cuộc gọi để theo dõi và đối soát.</p></blockquote>
+
+<h3>Ví dụ Response</h3>
+
+<p>Khi thành công:</p>
+
+<pre><code class="language-javascript">{
+  "success": true,
+  "httpStatus": 200,
+  "transactionId": "ah_n8n_a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "resource": "voice",
+  "operation": "makeACall",
+  "timestamp": "2026-04-15T09:00:00.000Z",
+  "error_code": "SUCCESS",
+  "error_message": "SUCCESS"
+}</code></pre>
+
+<p>Khi lỗi:</p>
+
+<pre><code class="language-javascript">{
+  "success": false,
+  "httpStatus": 200,
+  "transactionId": "ah_n8n_...",
+  "error_code": "0",
+  "error_message": "HỆ THỐNG OUTBOUND GẶP SỰ CỐ",
+  "errorCode": "0",
+  "errorMessage": "HỆ THỐNG OUTBOUND GẶP SỰ CỐ"
+}</code></pre>
+
+<h2>Sử dụng — Zalo ZNS: Send</h2>
+
+<p>Gửi thông báo ZNS (Zalo Notification Service) tới số điện thoại có tài khoản Zalo.</p>
+
+<h3>Cấu hình</h3>
+
+<ol>
+<li><p>Chọn <strong>Resource</strong>: <code>Zalo ZNS Notification</code></p></li>
+<li><p>Chọn <strong>Operation</strong>: <code>Send</code></p></li>
+<li><p>Điền số điện thoại nhận</p></li>
+<li><p>Chọn <strong>Campaign</strong> từ dropdown — hỗ trợ tìm kiếm và phân trang</p></li>
+<li><p><strong>Template Parameters</strong> tự động load dựa theo campaign đã chọn → điền giá trị vào các trường</p></li>
+</ol>
+
+<table style="min-width: 125px;"><colgroup><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"></colgroup><tbody><tr><th colspan="1" rowspan="1"><p>Tham số</p></th><th colspan="1" rowspan="1"><p>Kiểu</p></th><th colspan="1" rowspan="1"><p>Bắt buộc</p></th><th colspan="1" rowspan="1"><p>Ví dụ</p></th><th colspan="1" rowspan="1"><p>Mô tả</p></th></tr><tr><td colspan="1" rowspan="1"><p><code>Phone</code></p></td><td colspan="1" rowspan="1"><p>string</p></td><td colspan="1" rowspan="1"><p>Có</p></td><td colspan="1" rowspan="1"><p><code>0912345678</code></p></td><td colspan="1" rowspan="1"><p>Số điện thoại nhận (phải có Zalo)</p></td></tr><tr><td colspan="1" rowspan="1"><p><code>Campaign</code></p></td><td colspan="1" rowspan="1"><p>dropdown</p></td><td colspan="1" rowspan="1"><p>Có</p></td><td colspan="1" rowspan="1"><p>—</p></td><td colspan="1" rowspan="1"><p>Chọn campaign ZNS (hỗ trợ search + phân trang)</p></td></tr><tr><td colspan="1" rowspan="1"><p><code>Template Parameters</code></p></td><td colspan="1" rowspan="1"><p>dynamic</p></td><td colspan="1" rowspan="1"><p>Tùy template</p></td><td colspan="1" rowspan="1"><p>—</p></td><td colspan="1" rowspan="1"><p>Các trường tự động hiện ra theo template của campaign</p></td></tr></tbody></table>
+
+<h3>Cách Template Parameters hoạt động</h3>
+
+<ol>
+<li><p>Khi bạn chọn một campaign, node tự gọi API lấy thông tin template ZNS tương ứng</p></li>
+<li><p>Các trường có <code>sourceColumn</code> (dữ liệu người dùng nhập) sẽ hiển thị để điền giá trị</p></li>
+<li><p>Các trường <code>staticValue</code> (giá trị cố định) được xử lý tự động phía server — không hiển thị trên giao diện</p></li>
+<li><p>Label hiển thị = <code>paramName</code> (ví dụ: <code>customer_name</code>), key gửi API = <code>sourceColumn</code> (ví dụ: <code>name</code>)</p></li>
+</ol>
+
+<blockquote><p><strong>Lưu ý:</strong> Số điện thoại nhận phải có đăng ký tài khoản Zalo. Nếu không, ZNS sẽ gửi không thành công.</p></blockquote>
+
+<h2>Sử dụng với AI Agent</h2>
+
+<p>Node Alohub hỗ trợ chế độ <strong>AI Tool</strong> — có thể dùng như một công cụ cho AI Agent trong n8n.</p>
+
+<h3>Cách thiết lập</h3>
+
+<ol>
+<li><p>Kéo node <strong>When chat message received</strong> (Chat Trigger) vào canvas</p></li>
+<li><p>Kéo node <strong>AI Agent</strong> → nối từ Chat Trigger</p></li>
+<li><p>Trong AI Agent, click <strong>+</strong> tại slot <strong>Chat Model</strong> → chọn OpenAI / Claude / Gemini → tạo credential</p></li>
+<li><p>Click <strong>+</strong> tại slot <strong>Tool</strong> → tìm <strong>Alohub</strong> → chọn <strong>Alohub Tool</strong></p></li>
+<li><p>Cấu hình Alohub Tool: chọn Resource, Operation, và dùng expression <code>{{ $fromAI('fieldName') }}</code> cho các trường để AI tự điền</p></li>
+</ol>
+
+<h3>Ví dụ expression cho Voice Click to Call</h3>
+
+<table style="min-width: 100px;"><colgroup><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"></colgroup><tbody><tr><th colspan="1" rowspan="1"><p>Trường</p></th><th colspan="1" rowspan="1"><p>Expression</p></th><th colspan="1" rowspan="1"><p>Mô tả AI nhận</p></th><th colspan="1" rowspan="1"><p>Kiểu</p></th></tr><tr><td colspan="1" rowspan="1"><p>Phone Number</p></td><td colspan="1" rowspan="1"><p><code>{{ $fromAI('phoneNumber', 'Số điện thoại cần gọi', 'string') }}</code></p></td><td colspan="1" rowspan="1"><p>AI tự trích xuất số điện thoại từ câu chat</p></td><td colspan="1" rowspan="1"><p>string</p></td></tr><tr><td colspan="1" rowspan="1"><p>IP Phone</p></td><td colspan="1" rowspan="1"><p><code>{{ $fromAI('ipPhone', 'Số extension IP Phone', 'string') }}</code></p></td><td colspan="1" rowspan="1"><p>AI tự trích xuất extension</p></td><td colspan="1" rowspan="1"><p>string</p></td></tr></tbody></table>
+
+<h3>Ví dụ chat</h3>
+
+<pre><code class="language-bash"># Người dùng gõ:
+"Gọi cho khách hàng 0912345678 qua máy nhánh 6688"
+
+# AI Agent tự động:
+# 1. Nhận diện cần gọi Voice > Make a Call
+# 2. Trích xuất phoneNumber = "0912345678", ipPhone = "6688"
+# 3. Gọi Alohub Tool → thực hiện cuộc gọi
+# 4. Trả kết quả cho người dùng</code></pre>
+
+<h2>Xử lý lỗi</h2>
+
+<p>Node trả về thông tin lỗi chi tiết trong output:</p>
+
+<table style="min-width: 100px;"><colgroup><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"></colgroup><tbody><tr><th colspan="1" rowspan="1"><p>Trường</p></th><th colspan="1" rowspan="1"><p>Kiểu</p></th><th colspan="1" rowspan="1"><p>Ví dụ</p></th><th colspan="1" rowspan="1"><p>Mô tả</p></th></tr><tr><td colspan="1" rowspan="1"><p><code>success</code></p></td><td colspan="1" rowspan="1"><p>boolean</p></td><td colspan="1" rowspan="1"><p><code>false</code></p></td><td colspan="1" rowspan="1"><p>Kết quả API call</p></td></tr><tr><td colspan="1" rowspan="1"><p><code>httpStatus</code></p></td><td colspan="1" rowspan="1"><p>number</p></td><td colspan="1" rowspan="1"><p><code>200</code></p></td><td colspan="1" rowspan="1"><p>HTTP status code</p></td></tr><tr><td colspan="1" rowspan="1"><p><code>error_code</code></p></td><td colspan="1" rowspan="1"><p>string</p></td><td colspan="1" rowspan="1"><p><code>"0"</code></p></td><td colspan="1" rowspan="1"><p>Mã lỗi từ Alohub API</p></td></tr><tr><td colspan="1" rowspan="1"><p><code>error_message</code></p></td><td colspan="1" rowspan="1"><p>string</p></td><td colspan="1" rowspan="1"><p><code>"HỆ THỐNG..."</code></p></td><td colspan="1" rowspan="1"><p>Thông báo lỗi chi tiết</p></td></tr><tr><td colspan="1" rowspan="1"><p><code>transactionId</code></p></td><td colspan="1" rowspan="1"><p>string</p></td><td colspan="1" rowspan="1"><p><code>"ah_n8n_..."</code></p></td><td colspan="1" rowspan="1"><p>ID duy nhất để đối soát</p></td></tr></tbody></table>
+
+<blockquote><p><strong>Mẹo:</strong> Bật <strong>Continue On Error</strong> trong Settings của node Alohub để workflow tiếp tục chạy kể cả khi API lỗi — output sẽ chứa đầy đủ thông tin lỗi để xử lý ở các bước tiếp theo.</p></blockquote>
+
+<h2>Ví dụ Workflow</h2>
+
+<h3>Workflow 1 — Click to Call đơn giản</h3>
+
+<pre><code class="language-bash">[Manual Trigger] → [Alohub: Voice > Make a Call]
+                     Phone Number: 0912345678
+                     IP Phone: 6688</code></pre>
+
+<h3>Workflow 2 — Gửi ZNS từ Google Sheets</h3>
+
+<pre><code class="language-bash">[Schedule Trigger] → [Google Sheets: Get Rows] → [Alohub: ZNS > Send]
+                                                    Phone: {{ $json.phone }}
+                                                    Campaign: chọn từ dropdown
+                                                    customer_name: {{ $json.name }}</code></pre>
+
+<h3>Workflow 3 — AI Agent tự động gọi điện</h3>
+
+<pre><code class="language-bash">[Chat Trigger] → [AI Agent]
+                    ├── Chat Model: OpenAI GPT-4
+                    └── Tool: Alohub (Voice > Make a Call)</code></pre>
+
+<h2>Yêu cầu hệ thống</h2>
+
+<table style="min-width: 75px;"><colgroup><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"></colgroup><tbody><tr><th colspan="1" rowspan="1"><p>Yêu cầu</p></th><th colspan="1" rowspan="1"><p>Phiên bản</p></th><th colspan="1" rowspan="1"><p>Ghi chú</p></th></tr><tr><td colspan="1" rowspan="1"><p>n8n</p></td><td colspan="1" rowspan="1"><p>>= 1.0.0</p></td><td colspan="1" rowspan="1"><p>Đã test trên n8n 2.15.0</p></td></tr><tr><td colspan="1" rowspan="1"><p>API Key</p></td><td colspan="1" rowspan="1"><p>—</p></td><td colspan="1" rowspan="1"><p><a target="_blank" rel="noopener noreferrer nofollow" href="https://alohub.vn/lien-he">Liên hệ Alohub</a> để nhận</p></td></tr></tbody></table>

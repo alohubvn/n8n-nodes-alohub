@@ -1,0 +1,88 @@
+<h2>Voice: Click to Call</h2>
+
+<p>Thực hiện cuộc gọi ra (outbound) bằng cách kết nối số điện thoại khách hàng với IP Phone nội bộ thông qua Alohub.</p>
+
+<blockquote><p><strong>Yêu cầu:</strong> Đã cài đặt node <code>n8n-nodes-alohub</code> và thiết lập API Key credential. Xem <a target="_blank" rel="noopener noreferrer nofollow" href="https://developers.alohub.vn/">Hướng dẫn cài đặt</a> nếu chưa thực hiện.</p></blockquote>
+
+<h2>Cấu hình</h2>
+
+<ol>
+<li><p>Kéo node <strong>Alohub</strong> vào canvas</p></li>
+<li><p>Chọn <strong>Credential</strong>: Alohub account đã tạo</p></li>
+<li><p>Chọn <strong>Resource</strong>: <code>Voice</code></p></li>
+<li><p>Chọn <strong>Operation</strong>: <code>Make a Call</code></p></li>
+<li><p>Điền các tham số bên dưới</p></li>
+</ol>
+
+<h2>Tham số</h2>
+
+<table style="min-width: 125px;"><colgroup><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"></colgroup><tbody><tr><th colspan="1" rowspan="1"><p>Tham số</p></th><th colspan="1" rowspan="1"><p>Kiểu</p></th><th colspan="1" rowspan="1"><p>Bắt buộc</p></th><th colspan="1" rowspan="1"><p>Ví dụ</p></th><th colspan="1" rowspan="1"><p>Mô tả</p></th></tr><tr><td colspan="1" rowspan="1"><p><code>Phone Number</code></p></td><td colspan="1" rowspan="1"><p>string</p></td><td colspan="1" rowspan="1"><p>Có</p></td><td colspan="1" rowspan="1"><p><code>0912345678</code></p></td><td colspan="1" rowspan="1"><p>Số điện thoại cần gọi</p></td></tr><tr><td colspan="1" rowspan="1"><p><code>IP Phone</code></p></td><td colspan="1" rowspan="1"><p>string</p></td><td colspan="1" rowspan="1"><p>Có</p></td><td colspan="1" rowspan="1"><p><code>6688</code></p></td><td colspan="1" rowspan="1"><p>Số extension IP Phone nội bộ</p></td></tr></tbody></table>
+
+<blockquote><p><strong>Lưu ý:</strong> Hệ thống tự động tạo <code>transactionId</code> duy nhất cho mỗi cuộc gọi để theo dõi và đối soát.</p></blockquote>
+
+<h2>Response mẫu</h2>
+
+<p>Khi thành công:</p>
+
+<pre><code class="language-javascript">{
+  "success": true,
+  "httpStatus": 200,
+  "transactionId": "ah_n8n_a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "resource": "voice",
+  "operation": "makeACall",
+  "timestamp": "2026-04-15T09:00:00.000Z",
+  "error_code": "SUCCESS",
+  "error_message": "SUCCESS"
+}</code></pre>
+
+<p>Khi lỗi:</p>
+
+<pre><code class="language-javascript">{
+  "success": false,
+  "httpStatus": 200,
+  "transactionId": "ah_n8n_...",
+  "error_code": "0",
+  "error_message": "HỆ THỐNG OUTBOUND GẶP SỰ CỐ",
+  "errorCode": "0",
+  "errorMessage": "HỆ THỐNG OUTBOUND GẶP SỰ CỐ"
+}</code></pre>
+
+<h2>Ví dụ Workflow</h2>
+
+<h3>Workflow đơn giản — Gọi thủ công</h3>
+
+<pre><code class="language-bash">[Manual Trigger] → [Alohub: Voice > Make a Call]
+                     Phone Number: 0912345678
+                     IP Phone: 6688</code></pre>
+
+<h3>Workflow nâng cao — Gọi từ danh sách Google Sheets</h3>
+
+<pre><code class="language-bash">[Schedule Trigger] → [Google Sheets: Get Rows] → [Alohub: Voice > Make a Call]
+                                                    Phone Number: {{ $json.phone }}
+                                                    IP Phone: {{ $json.extension }}</code></pre>
+
+<h2>Sử dụng với AI Agent</h2>
+
+<p>Click to Call có thể được dùng như một công cụ cho AI Agent — AI sẽ tự trích xuất số điện thoại và extension từ câu chat.</p>
+
+<h3>Thiết lập</h3>
+
+<ol>
+<li><p>Kéo node <strong>When chat message received</strong> → nối tới <strong>AI Agent</strong></p></li>
+<li><p>Thêm <strong>Chat Model</strong> (OpenAI / Claude / Gemini)</p></li>
+<li><p>Thêm <strong>Tool</strong>: chọn <strong>Alohub Tool</strong></p></li>
+<li><p>Cấu hình Alohub Tool:</p></li>
+</ol>
+
+<table style="min-width: 75px;"><colgroup><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"></colgroup><tbody><tr><th colspan="1" rowspan="1"><p>Trường</p></th><th colspan="1" rowspan="1"><p>Giá trị</p></th><th colspan="1" rowspan="1"><p>Giải thích</p></th></tr><tr><td colspan="1" rowspan="1"><p>Resource</p></td><td colspan="1" rowspan="1"><p><code>Voice</code></p></td><td colspan="1" rowspan="1"><p>—</p></td></tr><tr><td colspan="1" rowspan="1"><p>Operation</p></td><td colspan="1" rowspan="1"><p><code>Make a Call</code></p></td><td colspan="1" rowspan="1"><p>—</p></td></tr><tr><td colspan="1" rowspan="1"><p>Phone Number</p></td><td colspan="1" rowspan="1"><p><code>{{ $fromAI('phoneNumber', 'Số điện thoại cần gọi', 'string') }}</code></p></td><td colspan="1" rowspan="1"><p>AI tự trích xuất từ câu chat</p></td></tr><tr><td colspan="1" rowspan="1"><p>IP Phone</p></td><td colspan="1" rowspan="1"><p><code>{{ $fromAI('ipPhone', 'Số extension IP Phone', 'string') }}</code></p></td><td colspan="1" rowspan="1"><p>AI tự trích xuất từ câu chat</p></td></tr></tbody></table>
+
+<h3>Ví dụ chat</h3>
+
+<pre><code class="language-bash"># Người dùng gõ:
+"Gọi cho khách hàng 0912345678 qua máy nhánh 6688"
+
+# AI Agent tự động:
+# 1. Nhận diện cần gọi Voice > Make a Call
+# 2. Trích xuất phoneNumber = "0912345678", ipPhone = "6688"
+# 3. Gọi Alohub Tool → thực hiện cuộc gọi
+# 4. Trả kết quả cho người dùng</code></pre>

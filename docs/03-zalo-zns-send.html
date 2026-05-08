@@ -1,0 +1,114 @@
+<h2>Zalo ZNS: Gửi thông báo</h2>
+
+<p>Gửi thông báo ZNS (Zalo Notification Service) tới số điện thoại có tài khoản Zalo thông qua Alohub.</p>
+
+<blockquote><p><strong>Yêu cầu:</strong> Đã cài đặt node <code>n8n-nodes-alohub</code> và thiết lập API Key credential. Xem <a target="_blank" rel="noopener noreferrer nofollow" href="https://developers.alohub.vn/">Hướng dẫn cài đặt</a> nếu chưa thực hiện.</p></blockquote>
+
+<h2>Cấu hình</h2>
+
+<ol>
+<li><p>Kéo node <strong>Alohub</strong> vào canvas</p></li>
+<li><p>Chọn <strong>Credential</strong>: Alohub account đã tạo</p></li>
+<li><p>Chọn <strong>Resource</strong>: <code>Zalo ZNS Notification</code></p></li>
+<li><p>Chọn <strong>Operation</strong>: <code>Send</code></p></li>
+<li><p>Điền số điện thoại nhận</p></li>
+<li><p>Chọn Campaign từ dropdown</p></li>
+<li><p>Điền Template Parameters</p></li>
+</ol>
+
+<h2>Tham số</h2>
+
+<table style="min-width: 125px;"><colgroup><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"></colgroup><tbody><tr><th colspan="1" rowspan="1"><p>Tham số</p></th><th colspan="1" rowspan="1"><p>Kiểu</p></th><th colspan="1" rowspan="1"><p>Bắt buộc</p></th><th colspan="1" rowspan="1"><p>Ví dụ</p></th><th colspan="1" rowspan="1"><p>Mô tả</p></th></tr><tr><td colspan="1" rowspan="1"><p><code>Phone</code></p></td><td colspan="1" rowspan="1"><p>string</p></td><td colspan="1" rowspan="1"><p>Có</p></td><td colspan="1" rowspan="1"><p><code>0912345678</code></p></td><td colspan="1" rowspan="1"><p>Số điện thoại nhận (phải có Zalo)</p></td></tr><tr><td colspan="1" rowspan="1"><p><code>Campaign</code></p></td><td colspan="1" rowspan="1"><p>dropdown</p></td><td colspan="1" rowspan="1"><p>Có</p></td><td colspan="1" rowspan="1"><p>—</p></td><td colspan="1" rowspan="1"><p>Chọn campaign ZNS từ danh sách</p></td></tr><tr><td colspan="1" rowspan="1"><p><code>Template Parameters</code></p></td><td colspan="1" rowspan="1"><p>dynamic</p></td><td colspan="1" rowspan="1"><p>Tùy template</p></td><td colspan="1" rowspan="1"><p>—</p></td><td colspan="1" rowspan="1"><p>Các trường tự động hiện theo template</p></td></tr></tbody></table>
+
+<h2>Chọn Campaign</h2>
+
+<p>Dropdown Campaign hỗ trợ:</p>
+
+<ul>
+<li><p><strong>Tìm kiếm</strong> — gõ tên campaign để lọc (gọi API server-side)</p></li>
+<li><p><strong>Phân trang</strong> — cuộn xuống để load thêm (25 campaign/trang)</p></li>
+<li><p><strong>Hiển thị</strong> — tên campaign kèm ID, ví dụ: <code>THÔNG BÁO ĐĂNG KÝ (ID: 509)</code></p></li>
+</ul>
+
+<blockquote><p><strong>Lưu ý:</strong> Danh sách campaign được lấy từ API <code>/v1/campaign/list</code> theo API Key của bạn. Chỉ hiện các campaign thuộc tài khoản đang đăng nhập.</p></blockquote>
+
+<h2>Template Parameters</h2>
+
+<p>Sau khi chọn campaign, node tự động load các trường cần điền dựa theo template ZNS tương ứng.</p>
+
+<h3>Cách hoạt động</h3>
+
+<ol>
+<li><p>Mỗi campaign có một <code>znsTemplateId</code> liên kết với template trên Zalo</p></li>
+<li><p>Node gọi API <code>/v1/zns/template</code> để lấy thông tin mapping của template đó</p></li>
+<li><p>Các trường có <code>sourceColumn</code> (dữ liệu người dùng nhập) sẽ hiển thị để bạn điền giá trị</p></li>
+<li><p>Các trường <code>staticValue</code> (giá trị cố định) được xử lý tự động phía server — không hiển thị trên giao diện</p></li>
+</ol>
+
+<h3>Ví dụ mapping</h3>
+
+<table style="min-width: 100px;"><colgroup><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"><col style="min-width: 25px;"></colgroup><tbody><tr><th colspan="1" rowspan="1"><p>Label hiển thị</p></th><th colspan="1" rowspan="1"><p>Key gửi API</p></th><th colspan="1" rowspan="1"><p>Loại</p></th><th colspan="1" rowspan="1"><p>Giá trị</p></th></tr><tr><td colspan="1" rowspan="1"><p><code>customer_name</code></p></td><td colspan="1" rowspan="1"><p><code>name</code></p></td><td colspan="1" rowspan="1"><p>Người dùng nhập</p></td><td colspan="1" rowspan="1"><p>Bạn điền: <code>Nguyễn Văn A</code></p></td></tr><tr><td colspan="1" rowspan="1"><p><code>phone_number</code></p></td><td colspan="1" rowspan="1"><p><code>phones</code></p></td><td colspan="1" rowspan="1"><p>Người dùng nhập</p></td><td colspan="1" rowspan="1"><p>Bạn điền: <code>0912345678</code></p></td></tr><tr><td colspan="1" rowspan="1"><p><code>date_time</code></p></td><td colspan="1" rowspan="1"><p>—</p></td><td colspan="1" rowspan="1"><p>Static (tự động)</p></td><td colspan="1" rowspan="1"><p>Server tự điền, không hiện UI</p></td></tr></tbody></table>
+
+<h2>Response mẫu</h2>
+
+<p>Khi thành công:</p>
+
+<pre><code class="language-javascript">{
+  "success": true,
+  "httpStatus": 200,
+  "transactionId": "ah_n8n_a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "resource": "zns",
+  "operation": "send",
+  "timestamp": "2026-04-15T09:00:00.000Z",
+  "error_code": "SUCCESS",
+  "error_message": "SUCCESS"
+}</code></pre>
+
+<p>Khi lỗi:</p>
+
+<pre><code class="language-javascript">{
+  "success": false,
+  "httpStatus": 200,
+  "transactionId": "ah_n8n_...",
+  "error_code": "5",
+  "error_message": "CAMPAIGN KHÔNG TỒN TẠI",
+  "errorCode": "5",
+  "errorMessage": "CAMPAIGN KHÔNG TỒN TẠI"
+}</code></pre>
+
+<h2>Ví dụ Workflow</h2>
+
+<h3>Workflow đơn giản — Gửi ZNS thủ công</h3>
+
+<pre><code class="language-bash">[Manual Trigger] → [Alohub: ZNS > Send]
+                     Phone: 0912345678
+                     Campaign: chọn từ dropdown
+                     customer_name: Nguyễn Văn A
+                     phone_number: 0912345678</code></pre>
+
+<h3>Workflow nâng cao — Gửi ZNS hàng loạt từ Google Sheets</h3>
+
+<pre><code class="language-bash">[Schedule Trigger] → [Google Sheets: Get Rows] → [Alohub: ZNS > Send]
+                                                    Phone: {{ $json.phone }}
+                                                    Campaign: chọn template cố định
+                                                    customer_name: {{ $json.name }}
+                                                    phone_number: {{ $json.phone }}</code></pre>
+
+<h3>Workflow tự động — Gửi ZNS khi có đơn hàng mới</h3>
+
+<pre><code class="language-bash">[Webhook Trigger] → [Alohub: ZNS > Send]
+                      Phone: {{ $json.customer_phone }}
+                      Campaign: "Thông báo đơn hàng"
+                      customer_name: {{ $json.customer_name }}
+                      phone_number: {{ $json.customer_phone }}</code></pre>
+
+<blockquote><p><strong>Mẹo:</strong> Sử dụng n8n expression <code>{{ $json.fieldName }}</code> để lấy dữ liệu động từ các node trước đó trong workflow. Ví dụ: lấy tên và số điện thoại từ Google Sheets, Webhook, hoặc CRM.</p></blockquote>
+
+<h2>Lưu ý quan trọng</h2>
+
+<ul>
+<li><p>Số điện thoại nhận <strong>phải có đăng ký tài khoản Zalo</strong>. Nếu không, ZNS sẽ gửi không thành công.</p></li>
+<li><p>Mỗi lần gửi, hệ thống tự động tạo <code>transactionId</code> duy nhất để theo dõi và đối soát.</p></li>
+<li><p>Template parameters tự động thay đổi khi bạn chọn campaign khác — không cần cấu hình thủ công.</p></li>
+<li><p>Bật <strong>Continue On Error</strong> nếu muốn workflow tiếp tục chạy kể cả khi gửi ZNS thất bại.</p></li>
+</ul>

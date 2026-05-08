@@ -8,6 +8,8 @@ import {
 	INodeListSearchResult,
 	INodeType,
 	INodeTypeDescription,
+	JsonObject,
+	NodeApiError,
 	NodeOperationError,
 	ResourceMapperFields,
 } from 'n8n-workflow';
@@ -67,7 +69,7 @@ export class Alohub implements INodeType {
 		group: ['output'],
 		version: 1,
 		subtitle:
-			'={{ ({voice:"Voice",zns:"Zalo ZNS"}[$parameter["resource"]] || $parameter["resource"]) + ": " + ({makeACall:"Make a Call",send:"Send ZNS"}[$parameter["operation"]] || $parameter["operation"]) }}',
+			'={{ ({voice:"Voice",zns:"Zalo ZNS"}[$parameter["resource"]] || $parameter["resource"]) + ": " + ({makeACall:"Click to Call",textToSpeech:"Text to Speech",playAudio:"Play Audio",send:"Send ZNS"}[$parameter["operation"]] || $parameter["operation"]) }}',
 		description: 'Send Zalo ZNS notifications and make voice calls via Alohub CPaaS',
 		defaults: { name: 'Alohub' },
 		inputs: ['main'],
@@ -100,7 +102,11 @@ export class Alohub implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['voice'] } },
-				options: [{ name: 'Make a Call', value: 'makeACall', action: 'Make a call' }],
+				options: [
+					{ name: 'Click to Call', value: 'makeACall', action: 'Click to call via IP phone' },
+					{ name: 'Play Audio', value: 'playAudio', action: 'Call and play an audio file' },
+					{ name: 'Text to Speech', value: 'textToSpeech', action: 'Call and read text aloud' },
+				],
 				default: 'makeACall',
 			},
 
@@ -137,6 +143,76 @@ export class Alohub implements INodeType {
 				placeholder: '6688',
 				description: 'IP phone extension number (e.g. 6688)',
 				displayOptions: { show: { resource: ['voice'], operation: ['makeACall'] } },
+			},
+
+			// ════════════════════════════════════════════════════════════════
+			// Voice — Text to Speech
+			// ════════════════════════════════════════════════════════════════
+			{
+				displayName: 'Phone Number',
+				name: 'ttsPhone',
+				type: 'string',
+				required: true,
+				default: '',
+				placeholder: '0912345678',
+				description: 'Recipient phone number to call',
+				displayOptions: { show: { resource: ['voice'], operation: ['textToSpeech'] } },
+			},
+			{
+				displayName: 'Text Content',
+				name: 'ttsText',
+				type: 'string',
+				required: true,
+				default: '',
+				typeOptions: { rows: 3 },
+				placeholder: 'Mã xác nhận của bạn là 482615',
+				description: 'Text that will be read aloud during the call (TTS)',
+				displayOptions: { show: { resource: ['voice'], operation: ['textToSpeech'] } },
+			},
+
+			// ════════════════════════════════════════════════════════════════
+			// Voice — Play Audio File
+			// ════════════════════════════════════════════════════════════════
+			{
+				displayName: 'Phone Number',
+				name: 'audioPhone',
+				type: 'string',
+				required: true,
+				default: '',
+				placeholder: '0912345678',
+				description: 'Recipient phone number to call',
+				displayOptions: { show: { resource: ['voice'], operation: ['playAudio'] } },
+			},
+			{
+				displayName: 'Audio Source',
+				name: 'audioSource',
+				type: 'options',
+				options: [
+					{ name: 'Binary Data (From Previous Node)', value: 'binary' },
+					{ name: 'URL (Direct Link)', value: 'url' },
+				],
+				default: 'url',
+				description: 'Where to get the audio file from',
+				displayOptions: { show: { resource: ['voice'], operation: ['playAudio'] } },
+			},
+			{
+				displayName: 'Audio URL',
+				name: 'audioUrl',
+				type: 'string',
+				required: true,
+				default: '',
+				placeholder: 'https://example.com/audio.mp3',
+				description: 'Direct URL to the audio file (MP3, WAV, M4A)',
+				displayOptions: { show: { resource: ['voice'], operation: ['playAudio'], audioSource: ['url'] } },
+			},
+			{
+				displayName: 'Binary Property',
+				name: 'audioFile',
+				type: 'string',
+				required: true,
+				default: 'data',
+				description: 'Name of the binary property containing the audio file (MP3, WAV, M4A)',
+				displayOptions: { show: { resource: ['voice'], operation: ['playAudio'], audioSource: ['binary'] } },
 			},
 
 			// ════════════════════════════════════════════════════════════════
@@ -262,7 +338,6 @@ export class Alohub implements INodeType {
 				if (!znsTemplateId) return { fields: [] };
 
 				try {
-					// Fetch template mappings directly (no need to look up campaigns)
 					const tmplRes = await this.helpers.httpRequestWithAuthentication.call(
 						this,
 						'alohubApi',
@@ -282,9 +357,6 @@ export class Alohub implements INodeType {
 					const mappings = (template.paramMappings as IDataObject[]) || [];
 					const params = (template.params as IDataObject[]) || [];
 
-					// Only show editable fields (those with sourceColumn).
-					// Static value fields are configured server-side on the template,
-					// BE injects them automatically — no need to show in UI.
 					const fields = mappings
 						.filter((m) => !!m.sourceColumn)
 						.map((m) => {
@@ -354,6 +426,98 @@ export class Alohub implements INodeType {
 					responseData = (fullRes.body as IDataObject) || fullRes;
 				}
 
+				// ── Voice: Text to Speech ────────────────────────────────────
+				else if (resource === 'voice' && operation === 'textToSpeech') {
+					const phone = this.getNodeParameter('ttsPhone', i) as string;
+					const otp = this.getNodeParameter('ttsText', i) as string;
+					transactionId = generateTransactionId();
+
+					const body: IDataObject = { phone, otp, transactionId };
+
+					const response = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						'alohubApi',
+						{
+							method: 'POST',
+							url: `${BASE_URL}/v1/voice/text-to-speech`,
+							headers: { 'Content-Type': 'application/json' },
+							body,
+							json: true,
+							returnFullResponse: true,
+							timeout: REQUEST_TIMEOUT,
+						},
+					);
+					const fullRes = response as IDataObject;
+					httpStatus = (fullRes.statusCode as number) || 0;
+					responseData = (fullRes.body as IDataObject) || fullRes;
+				}
+
+				// ── Voice: Play Audio File ───────────────────────────────────
+				else if (resource === 'voice' && operation === 'playAudio') {
+					const phone = this.getNodeParameter('audioPhone', i) as string;
+					const audioSource = this.getNodeParameter('audioSource', i) as string;
+					transactionId = generateTransactionId();
+
+					let dataBuffer: Buffer;
+					let mimeType = 'audio/mpeg';
+					let fileName = 'audio.mp3';
+
+					if (audioSource === 'url') {
+						const audioUrl = this.getNodeParameter('audioUrl', i) as string;
+						const downloaded = (await this.helpers.httpRequest({
+							method: 'GET',
+							url: audioUrl,
+							encoding: 'arraybuffer',
+							timeout: REQUEST_TIMEOUT,
+						})) as Buffer;
+						dataBuffer = Buffer.from(downloaded);
+
+						const urlLower = audioUrl.toLowerCase();
+						if (urlLower.includes('.wav')) {
+							mimeType = 'audio/wav';
+							fileName = 'audio.wav';
+						} else if (urlLower.includes('.m4a')) {
+							mimeType = 'audio/m4a';
+							fileName = 'audio.m4a';
+						}
+					} else {
+						const binaryPropertyName = this.getNodeParameter('audioFile', i) as string;
+						const binaryData = this.helpers.assertBinaryData(i, binaryPropertyName);
+						dataBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
+						mimeType = binaryData.mimeType || 'audio/mpeg';
+						fileName = binaryData.fileName || 'audio.mp3';
+					}
+
+					const credentials = await this.getCredentials('alohubApi');
+					const apiKey = credentials.apiKey as string;
+
+					const rawResponse = (await this.helpers.request({
+						method: 'POST',
+						uri: `${BASE_URL}/v1/voice/tts/audio`,
+						headers: {
+							'X-Api-Key': apiKey,
+						},
+						formData: {
+							phone,
+							file: {
+								value: dataBuffer,
+								options: {
+									filename: fileName,
+									contentType: mimeType,
+								},
+							},
+						},
+						timeout: REQUEST_TIMEOUT,
+					})) as string;
+
+					httpStatus = 200;
+					try {
+						responseData = JSON.parse(rawResponse) as IDataObject;
+					} catch {
+						responseData = { rawResponse } as IDataObject;
+					}
+				}
+
 				// ── ZNS: Send ────────────────────────────────────────────────
 				else if (resource === 'zns' && operation === 'send') {
 					const phone = this.getNodeParameter('phone', i) as string;
@@ -371,7 +535,6 @@ export class Alohub implements INodeType {
 
 					const paramValues = templateParams.value || {};
 					for (const [key, value] of Object.entries(paramValues)) {
-						// Skip static placeholder fields (handled server-side by BE)
 						if (key.startsWith('__static_')) continue;
 						if (value !== '' && value !== undefined && value !== null) {
 							body[key] = value;
@@ -444,7 +607,7 @@ export class Alohub implements INodeType {
 						pairedItem: { item: i },
 					});
 				} else {
-					throw error;
+					throw new NodeApiError(this.getNode(), error as JsonObject);
 				}
 			}
 		}
