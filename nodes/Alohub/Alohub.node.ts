@@ -488,33 +488,33 @@ export class Alohub implements INodeType {
 						fileName = binaryData.fileName || 'audio.mp3';
 					}
 
-					const credentials = await this.getCredentials('alohubApi');
-					const apiKey = credentials.apiKey as string;
+					const form = new FormData();
+					form.append('phone', phone);
+					form.append('file', new Blob([dataBuffer], { type: mimeType }), fileName);
 
-					const rawResponse = (await this.helpers.request({
-						method: 'POST',
-						uri: `${BASE_URL}/v1/voice/tts/audio`,
-						headers: {
-							'X-Api-Key': apiKey,
+					const response = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						'alohubApi',
+						{
+							method: 'POST',
+							url: `${BASE_URL}/v1/voice/tts/audio`,
+							body: form,
+							returnFullResponse: true,
+							timeout: REQUEST_TIMEOUT,
 						},
-						formData: {
-							phone,
-							file: {
-								value: dataBuffer,
-								options: {
-									filename: fileName,
-									contentType: mimeType,
-								},
-							},
-						},
-						timeout: REQUEST_TIMEOUT,
-					})) as string;
+					);
+					const fullRes = response as IDataObject;
+					httpStatus = (fullRes.statusCode as number) || 200;
 
-					httpStatus = 200;
-					try {
-						responseData = JSON.parse(rawResponse) as IDataObject;
-					} catch {
-						responseData = { rawResponse } as IDataObject;
+					const resBody = fullRes.body;
+					if (typeof resBody === 'string') {
+						try {
+							responseData = JSON.parse(resBody) as IDataObject;
+						} catch {
+							responseData = { rawResponse: resBody } as IDataObject;
+						}
+					} else {
+						responseData = (resBody as IDataObject) || fullRes;
 					}
 				}
 
