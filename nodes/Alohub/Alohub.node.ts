@@ -165,7 +165,7 @@ export class Alohub implements INodeType {
 				required: true,
 				default: '',
 				typeOptions: { rows: 3 },
-				placeholder: 'Mã xác nhận của bạn là 482615',
+				placeholder: 'Your verification code is 482615',
 				description: 'Text that will be read aloud during the call (TTS)',
 				displayOptions: { show: { resource: ['voice'], operation: ['textToSpeech'] } },
 			},
